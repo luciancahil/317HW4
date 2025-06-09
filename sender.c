@@ -86,6 +86,19 @@ stcp_send_ctrl_blk * stcp_open(char *destination, int sendersPort,
 
     stcp_send_ctrl_blk *blk = malloc(sizeof(stcp_send_ctrl_blk));
 
+    struct packet *synPacket = malloc(sizeof(packet));
+
+
+    enum tcpflags synFlag = SYN;
+    int seq = rand();
+    int ack = rand();
+
+    createSegment(synPacket, synFlag, STCP_MAXWIN, seq, ack, NULL, 0);
+
+    send(fd, synPacket, synPacket->len, 0);
+
+
+
     blk->fd = fd;
     (void) fd;
 
