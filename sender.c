@@ -65,6 +65,17 @@ int stcp_send(stcp_send_ctrl_blk *stcp_CB, unsigned char* data, int length) {
 
     struct packet *dataPacket = malloc(sizeof(packet));
 
+    int totalLen = sizeof(tcpheader) + length;
+    unsigned char *fullData = malloc(totalLen);
+    if (!fullData) {
+        perror("malloc");
+        return STCP_ERROR;
+    }
+
+    memset(fullData, 0, sizeof(tcpheader));
+
+    memcpy(fullData + sizeof(tcpheader), data, length);
+
 
     enum tcpflags ackFlag = ACK;
     int seq = stcp_CB->lastAck;
@@ -74,12 +85,12 @@ int stcp_send(stcp_send_ctrl_blk *stcp_CB, unsigned char* data, int length) {
 
 
 
-    createSegment(dataPacket, ackFlag, STCP_MAXWIN, seq, ack, data, length);
+    createSegment(dataPacket, ackFlag, STCP_MAXWIN, seq, ack, fullData, length);
     dataPacket->hdr->checksum = ipchecksum(dataPacket, dataPacket->len);
 
-    send(fd, dataPacket, dataPacket->len, 0);
+    send(fd, dataPacket->data, dataPacket->len, 0);
 
-    printf("Data: %d\n", data[0]);
+    printf("Data: %d\n", dataPacket->data[21]);
 
     return STCP_SUCCESS;
 }
@@ -121,7 +132,7 @@ stcp_send_ctrl_blk * stcp_open(char *destination, int sendersPort,
 
     synPacket->hdr->checksum = ipchecksum(synPacket, synPacket->len);
 
-    send(fd, synPacket, synPacket->len, 0);
+    send(fd, synPacket->data, synPacket->len, 0);
 
     struct tcpheader *synAckPacket = malloc(sizeof(tcpheader));
 
