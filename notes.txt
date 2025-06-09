@@ -29,3 +29,4 @@ Recieve syn / ack.
 
 Send data.
 
+Next, read the data into the header, and get ready to send the file.

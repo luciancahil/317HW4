@@ -33,6 +33,8 @@ typedef struct {
 
 
     int fd;     /* used only to make this compile */
+    int lastSeq;
+    int lastAck;
 
     /* YOUR CODE HERE */
 
@@ -57,6 +59,24 @@ typedef struct {
 int stcp_send(stcp_send_ctrl_blk *stcp_CB, unsigned char* data, int length) {
 
     /* YOUR CODE HERE */
+
+    int fd = stcp_CB->fd;
+
+
+    struct packet *dataPacket = malloc(sizeof(packet));
+
+    memcpy(dataPacket->data, data, length);
+
+    enum tcpflags ackFlag = ACK;
+    int seq = stcp_CB->lastSeq;
+    int ack = stcp_CB->lastAck;
+
+
+
+    createSegment(dataPacket, ackFlag, STCP_MAXWIN, seq, ack, NULL, 0);
+    dataPacket->hdr->checksum = ipchecksum(dataPacket, dataPacket->len);
+
+    send(fd, dataPacket, dataPacket->len, 0);
     return STCP_SUCCESS;
 }
 
@@ -99,19 +119,22 @@ stcp_send_ctrl_blk * stcp_open(char *destination, int sendersPort,
 
     send(fd, synPacket, synPacket->len, 0);
 
-    struct packet *synAckPacket = malloc(sizeof(packet));
+    struct tcpheader *synAckPacket = malloc(sizeof(packet));
 
     readWithTimeout(fd, synAckPacket, 100);
     
-    printf("hi!\n");
 
 
 
     blk->fd = fd;
+    blk->lastAck = synAckPacket->ackNo;
+    blk->lastSeq = synAckPacket->seqNo;
+
     (void) fd;
 
-    // seems to print backwards.
-    printf("Packet: %d\n", htons(((tcpheader *)synAckPacket)->windowSize));
+    // use htons for 16 bit
+    printf("Packet: %d\n", htonl((synAckPacket)->seqNo));
+
     /* YOUR CODE HERE */
     return blk;
 }
@@ -149,7 +172,6 @@ int getDefaultPort() {
  */
 int main(int argc, char **argv) {
     stcp_send_ctrl_blk *cb;
-    printf("hello!\n");
     srand(time(NULL)); // Seed with current time
 
     char *destinationHost;
