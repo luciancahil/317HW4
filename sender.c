@@ -95,6 +95,8 @@ stcp_send_ctrl_blk * stcp_open(char *destination, int sendersPort,
 
     createSegment(synPacket, synFlag, STCP_MAXWIN, seq, ack, NULL, 0);
 
+    synPacket->hdr->checksum = ipchecksum(synPacket, synPacket->len);
+
     send(fd, synPacket, synPacket->len, 0);
 
 
@@ -141,6 +143,8 @@ int getDefaultPort() {
 int main(int argc, char **argv) {
     stcp_send_ctrl_blk *cb;
     printf("hello!\n");
+    srand(time(NULL)); // Seed with current time
+
     char *destinationHost;
     int receiversPort, sendersPort;
     char *filename = NULL;
@@ -188,7 +192,7 @@ int main(int argc, char **argv) {
         return 0;
     }
 
-    printf("Connection made!");
+    printf("Connection made!\n");
 
     /* Start to send data in file via STCP to remote receiver. Chop up
      * the file into pieces as large as max packet size and transmit
