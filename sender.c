@@ -101,7 +101,7 @@ stcp_send_ctrl_blk * stcp_open(char *destination, int sendersPort,
 
     struct packet *synAckPacket = malloc(sizeof(packet));
 
-    readWithTimeout(fd, synAckPacket, 0);
+    readWithTimeout(fd, synAckPacket, 100);
     
     printf("hi!\n");
 
@@ -110,7 +110,8 @@ stcp_send_ctrl_blk * stcp_open(char *destination, int sendersPort,
     blk->fd = fd;
     (void) fd;
 
-    printf("Packet: %d\n", synPacket->hdr->seqNo);
+    // seems to print backwards.
+    printf("Packet: %d\n", htons(((tcpheader *)synAckPacket)->windowSize));
     /* YOUR CODE HERE */
     return blk;
 }
@@ -191,7 +192,6 @@ int main(int argc, char **argv) {
      * control block should be correctly initialized.
      */
     cb = stcp_open(destinationHost, sendersPort, receiversPort);
-    printf("MSS: %lu\n", STCP_MSS);
     if (cb == NULL) {
         /* YOUR CODE HERE */
         printf("Connection was null\n");
