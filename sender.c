@@ -33,8 +33,8 @@ typedef struct {
 
 
     int fd;     /* used only to make this compile */
-    int lastSeq;
-    int lastAck;
+    int nextAck;
+    int nextSeq;
 
     /* YOUR CODE HERE */
 
@@ -78,10 +78,8 @@ int stcp_send(stcp_send_ctrl_blk *stcp_CB, unsigned char* data, int length) {
 
 
     enum tcpflags ackFlag = ACK;
-    int seq = stcp_CB->lastAck;
-    int ack = stcp_CB->lastSeq;
-
-    ack += 0x01000000;
+    int seq = stcp_CB->nextSeq;
+    int ack = stcp_CB->nextAck;
 
 
 
@@ -89,8 +87,15 @@ int stcp_send(stcp_send_ctrl_blk *stcp_CB, unsigned char* data, int length) {
     dataPacket->hdr->checksum = ipchecksum(dataPacket, dataPacket->len);
 
     send(fd, dataPacket->data, dataPacket->len, 0);
+   
+    struct tcpheader *ackPacket = malloc(sizeof(tcpheader));
 
-    printf("Data: %d\n", dataPacket->data[21]);
+
+    readWithTimeout(fd, ackPacket, 100);
+
+    stcp_CB->nextAck = ackPacket->seqNo + 0x01000000;
+    step_CB->nextSeq = nextSeq->ackNo;
+
 
     return STCP_SUCCESS;
 }
@@ -142,8 +147,8 @@ stcp_send_ctrl_blk * stcp_open(char *destination, int sendersPort,
 
 
     blk->fd = fd;
-    blk->lastAck = synAckPacket->ackNo;
-    blk->lastSeq = synAckPacket->seqNo;
+    blk->nextSeq = synAckPacket->ackNo;
+    blk->nextAck = synAckPacket->seqNo + 0x01000000;
 
     (void) fd;
 
@@ -173,8 +178,8 @@ int stcp_close(stcp_send_ctrl_blk *cb) {
 
     enum tcpflags ackFlag = ACK;
     enum tcpflags finFlag = FIN;
-    int seq = cb->lastAck;
-    int ack = cb->lastSeq;
+    int seq = cb->nextSeq;
+    int ack = cb->nextAck;
 
 
     createSegment(synPacket, ackFlag | finFlag, STCP_MAXWIN, seq, ack, NULL, 0);
