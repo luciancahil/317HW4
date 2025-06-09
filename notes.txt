@@ -2,3 +2,30 @@ Use this command to run the main function in sender.c:
 
 make
 ./sender localhost 4562 4182 smallfile
+
+Okay, this is really hard. 
+
+What should I even do?
+
+Okay, max size is 280.
+
+That doesn't seem to help me much.
+
+I will probably need 2 terminals. One for recieveing, the other for sending.
+
+Okay, but let's break this down, shall we?
+
+The goal is to have a bunch of packets, I send using the write() command.
+
+I don't think there's data in a syn command?
+
+No, there isn't.
+
+Let's do this.
+
+Make syn.
+
+Recieve syn / ack.
+
+Send data.
+

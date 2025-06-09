@@ -32,7 +32,7 @@
 typedef struct {
 
 
-    int DELETE_ME;     /* used only to make this compile */
+    int fd;     /* used only to make this compile */
 
     /* YOUR CODE HERE */
 
@@ -83,9 +83,15 @@ stcp_send_ctrl_blk * stcp_open(char *destination, int sendersPort,
     logLog("init", "Sending from port %d to <%s, %d>", sendersPort, destination, receiversPort);
     // Since I am the sender, the destination and receiversPort name the other side
     int fd = udp_open(destination, receiversPort, sendersPort);
+
+    stcp_send_ctrl_blk *blk = malloc(sizeof(stcp_send_ctrl_blk));
+
+    blk->fd = fd;
     (void) fd;
+
+    printf("FD: %d\n", blk->fd);
     /* YOUR CODE HERE */
-    return NULL;
+    return blk;
 }
 
 
@@ -162,7 +168,7 @@ int main(int argc, char **argv) {
      * control block should be correctly initialized.
      */
     cb = stcp_open(destinationHost, sendersPort, receiversPort);
-    printf("CB: %d\n", cb);
+    printf("MSS: %lu\n", STCP_MSS);
     if (cb == NULL) {
         /* YOUR CODE HERE */
         printf("Connection was null\n");
