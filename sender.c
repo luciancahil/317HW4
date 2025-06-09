@@ -68,8 +68,10 @@ int stcp_send(stcp_send_ctrl_blk *stcp_CB, unsigned char* data, int length) {
     memcpy(dataPacket->data, data, length);
 
     enum tcpflags ackFlag = ACK;
-    int seq = stcp_CB->lastSeq;
-    int ack = stcp_CB->lastAck;
+    int seq = stcp_CB->lastAck;
+    int ack = stcp_CB->lastSeq;
+
+    ack += 0x01000000;
 
 
 
@@ -77,6 +79,8 @@ int stcp_send(stcp_send_ctrl_blk *stcp_CB, unsigned char* data, int length) {
     dataPacket->hdr->checksum = ipchecksum(dataPacket, dataPacket->len);
 
     send(fd, dataPacket, dataPacket->len, 0);
+
+    printf("Len: %d\n", dataPacket->len);
     return STCP_SUCCESS;
 }
 
