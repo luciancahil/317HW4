@@ -99,12 +99,18 @@ stcp_send_ctrl_blk * stcp_open(char *destination, int sendersPort,
 
     send(fd, synPacket, synPacket->len, 0);
 
+    struct packet *synAckPacket = malloc(sizeof(packet));
+
+    readWithTimeout(fd, synAckPacket, 0);
+    
+    printf("hi!\n");
+
 
 
     blk->fd = fd;
     (void) fd;
 
-    printf("FD: %d\n", blk->fd);
+    printf("Packet: %d\n", synPacket->hdr->seqNo);
     /* YOUR CODE HERE */
     return blk;
 }
