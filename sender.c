@@ -65,7 +65,6 @@ int stcp_send(stcp_send_ctrl_blk *stcp_CB, unsigned char* data, int length) {
 
     struct packet *dataPacket = malloc(sizeof(packet));
 
-    memcpy(dataPacket->data, data, length);
 
     enum tcpflags ackFlag = ACK;
     int seq = stcp_CB->lastAck;
@@ -75,12 +74,13 @@ int stcp_send(stcp_send_ctrl_blk *stcp_CB, unsigned char* data, int length) {
 
 
 
-    createSegment(dataPacket, ackFlag, STCP_MAXWIN, seq, ack, NULL, 0);
+    createSegment(dataPacket, ackFlag, STCP_MAXWIN, seq, ack, data, length);
     dataPacket->hdr->checksum = ipchecksum(dataPacket, dataPacket->len);
 
     send(fd, dataPacket, dataPacket->len, 0);
 
-    printf("Len: %d\n", dataPacket->len);
+    printf("Data: %d\n", data[0]);
+
     return STCP_SUCCESS;
 }
 
@@ -123,7 +123,7 @@ stcp_send_ctrl_blk * stcp_open(char *destination, int sendersPort,
 
     send(fd, synPacket, synPacket->len, 0);
 
-    struct tcpheader *synAckPacket = malloc(sizeof(packet));
+    struct tcpheader *synAckPacket = malloc(sizeof(tcpheader));
 
     readWithTimeout(fd, synAckPacket, 100);
     
@@ -154,7 +154,27 @@ stcp_send_ctrl_blk * stcp_open(char *destination, int sendersPort,
  * Returns STCP_SUCCESS on success or STCP_ERROR on error.
  */
 int stcp_close(stcp_send_ctrl_blk *cb) {
-    /* YOUR CODE HERE */
+    int fd = cb->fd;
+
+
+    struct packet *synPacket = malloc(sizeof(packet));
+
+
+    enum tcpflags ackFlag = ACK;
+    enum tcpflags finFlag = FIN;
+    int seq = cb->lastAck;
+    int ack = cb->lastSeq;
+
+
+    createSegment(synPacket, ackFlag | finFlag, STCP_MAXWIN, seq, ack, NULL, 0);
+
+    synPacket->hdr->checksum = ipchecksum(synPacket, synPacket->len);
+
+    send(fd, synPacket, synPacket->len, 0);
+
+    struct tcpheader *synAckPacket = malloc(sizeof(packet));
+
+    readWithTimeout(fd, synAckPacket, 100);
     return STCP_SUCCESS;
 }
 /*
