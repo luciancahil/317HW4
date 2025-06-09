@@ -162,9 +162,14 @@ int main(int argc, char **argv) {
      * control block should be correctly initialized.
      */
     cb = stcp_open(destinationHost, sendersPort, receiversPort);
+    printf("CB: %d\n", cb);
     if (cb == NULL) {
         /* YOUR CODE HERE */
+        printf("Connection was null\n");
+        return 0;
     }
+
+    printf("Connection made!");
 
     /* Start to send data in file via STCP to remote receiver. Chop up
      * the file into pieces as large as max packet size and transmit
