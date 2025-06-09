@@ -1,0 +1,4 @@
+Use this command to run the main function in sender.c:
+
+make
+./sender localhost 4562 4182 smallfile
