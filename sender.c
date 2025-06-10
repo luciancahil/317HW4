@@ -41,16 +41,27 @@ typedef struct {
 } stcp_send_ctrl_blk;
 /* ADD ANY EXTRA FUNCTIONS HERE */
 
-int send_and_wait(int fd, packet *dataPacket, packet *responsePacket) {
+int send_and_wait(int fd, packet *dataPacket, tcpheader *responsePacket) {
     int response = 0;
     
+    int expectedAck = ntohl(dataPacket->hdr->seqNo) + dataPacket->len - 20;
+
+
+
     while (response == 0 || response == STCP_READ_TIMED_OUT) {
         send(fd, dataPacket->data, dataPacket->len, 0);
         response = readWithTimeout(fd, responsePacket, 100);
+
+        if((responsePacket->flags & 3) != 0) {
+            expectedAck += 1;
+        }
+
+
+        if(expectedAck != ntohl(responsePacket->ackNo)) {
+            printf("bad ack");
+            response = 0;
+        }
     }
-
-
-
     return response;
 }
 
