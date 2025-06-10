@@ -94,8 +94,7 @@ int stcp_send(stcp_send_ctrl_blk *stcp_CB, unsigned char* data, int length) {
     dataPacket->hdr->checksum = ipchecksum(dataPacket, dataPacket->len);
     struct tcpheader *ackPacket = malloc(sizeof(tcpheader));
 
-    send(fd, dataPacket->data, dataPacket->len, 0); 
-    readWithTimeout(fd, ackPacket, 100);
+    send_and_wait(fd, dataPacket, ackPacket);
 
     stcp_CB->nextAck = ackPacket->seqNo;
     stcp_CB->nextSeq = ackPacket->ackNo;
@@ -142,8 +141,7 @@ stcp_send_ctrl_blk * stcp_open(char *destination, int sendersPort,
     synPacket->hdr->checksum = ipchecksum(synPacket, synPacket->len);
     struct tcpheader *synAckPacket = malloc(sizeof(tcpheader));
 
-    send(fd, synPacket->data, synPacket->len, 0); 
-    readWithTimeout(fd, synAckPacket, 100);
+    send_and_wait(fd, dataPacket, ackPacket);
     
     send_and_wait()
 
@@ -173,39 +171,37 @@ stcp_send_ctrl_blk * stcp_open(char *destination, int sendersPort,
 * Returns STCP_SUCCESS on success or STCP_ERROR on error.
 */
 int stcp_close(stcp_send_ctrl_blk *cb) {
-int fd = cb->fd;
+    int fd = cb->fd;
 
 
-struct packet *synPacket = malloc(sizeof(packet));
+    struct packet *synPacket = malloc(sizeof(packet));
 
 
-enum tcpflags ackFlag = ACK;
-enum tcpflags finFlag = FIN;
-int seq = cb->nextSeq;
-int ack = cb->nextAck;
+    enum tcpflags ackFlag = ACK;
+    enum tcpflags finFlag = FIN;
+    int seq = cb->nextSeq;
+    int ack = cb->nextAck;
 
 
-createSegment(synPacket, ackFlag | finFlag, STCP_MAXWIN, seq, ack, NULL, 0);
+    createSegment(synPacket, ackFlag | finFlag, STCP_MAXWIN, seq, ack, NULL, 0);
 
-synPacket->hdr->checksum = ipchecksum(synPacket, synPacket->len);
-struct tcpheader *finAck = malloc(sizeof(packet));
-
-
-
-send(fd, synPacket, synPacket->len, 0);
-readWithTimeout(fd, finAck, 100);
-
-seq = synPacket->hdr->ackNo;
-ack = synPacket->hdr->seqNo;
-
-createSegment(synPacket, ackFlag, STCP_MAXWIN, seq, ack, NULL, 0);
-
-synPacket->hdr->checksum = ipchecksum(synPacket, synPacket->len);
-
-send(fd, synPacket, synPacket->len, 0);
+    synPacket->hdr->checksum = ipchecksum(synPacket, synPacket->len);
+    struct tcpheader *finAck = malloc(sizeof(packet));
 
 
-return STCP_SUCCESS;
+    send_and_wait(fd, dataPacket, finAck);
+
+    seq = synPacket->hdr->ackNo;
+    ack = synPacket->hdr->seqNo;
+
+    createSegment(synPacket, ackFlag, STCP_MAXWIN, seq, ack, NULL, 0);
+
+    synPacket->hdr->checksum = ipchecksum(synPacket, synPacket->len);
+
+    send(fd, synPacket, synPacket->len, 0);
+
+
+    return STCP_SUCCESS;
 }
 /*
 * Return a port number based on the uid of the caller.  This will
