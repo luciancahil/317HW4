@@ -41,6 +41,13 @@
  } stcp_send_ctrl_blk;
  /* ADD ANY EXTRA FUNCTIONS HERE */
  
+int send_and_wait(int fd, packet *dataPacket, packet *responsePacket) {
+    send(fd, dataPacket->data, dataPacket->len, 0);
+    int response = readWithTimeout(fd, responsePacket, 100);
+
+    return response;
+}
+
  /*
   * Send STCP. This routine is to send all the data (len bytes).  If more
   * than MSS bytes are to be sent, the routine breaks the data into multiple
@@ -85,12 +92,9 @@
  
      createSegment(dataPacket, ackFlag, STCP_MAXWIN, seq, ack, fullData, length);
      dataPacket->hdr->checksum = ipchecksum(dataPacket, dataPacket->len);
- 
-     send(fd, dataPacket->data, dataPacket->len, 0);
-    
      struct tcpheader *ackPacket = malloc(sizeof(tcpheader));
- 
- 
+
+     send(fd, dataPacket->data, dataPacket->len, 0); 
      readWithTimeout(fd, ackPacket, 100);
  
      stcp_CB->nextAck = ackPacket->seqNo;
@@ -136,11 +140,9 @@
      createSegment(synPacket, synFlag, STCP_MAXWIN, seq, ack, NULL, 0);
  
      synPacket->hdr->checksum = ipchecksum(synPacket, synPacket->len);
- 
-     send(fd, synPacket->data, synPacket->len, 0);
- 
      struct tcpheader *synAckPacket = malloc(sizeof(tcpheader));
- 
+
+     send(fd, synPacket->data, synPacket->len, 0); 
      readWithTimeout(fd, synAckPacket, 100);
      
  
@@ -185,11 +187,9 @@
      createSegment(synPacket, ackFlag | finFlag, STCP_MAXWIN, seq, ack, NULL, 0);
  
      synPacket->hdr->checksum = ipchecksum(synPacket, synPacket->len);
- 
-     send(fd, synPacket, synPacket->len, 0);
- 
      struct tcpheader *finAck = malloc(sizeof(packet));
- 
+
+     send(fd, synPacket, synPacket->len, 0);
      readWithTimeout(fd, finAck, 100);
  
      seq = synPacket->hdr->ackNo;
