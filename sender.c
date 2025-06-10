@@ -42,8 +42,14 @@ typedef struct {
 /* ADD ANY EXTRA FUNCTIONS HERE */
 
 int send_and_wait(int fd, packet *dataPacket, packet *responsePacket) {
-    send(fd, dataPacket->data, dataPacket->len, 0);
-    int response = readWithTimeout(fd, responsePacket, 100);
+    int response = 0;
+    
+    while (response == 0 || response == STCP_READ_TIMED_OUT) {
+        send(fd, dataPacket->data, dataPacket->len, 0);
+        response = readWithTimeout(fd, responsePacket, 100);
+    }
+
+
 
     return response;
 }
@@ -141,9 +147,8 @@ stcp_send_ctrl_blk * stcp_open(char *destination, int sendersPort,
     synPacket->hdr->checksum = ipchecksum(synPacket, synPacket->len);
     struct tcpheader *synAckPacket = malloc(sizeof(tcpheader));
 
-    send_and_wait(fd, dataPacket, ackPacket);
+    send_and_wait(fd, synPacket, synAckPacket);
     
-    send_and_wait()
 
 
 
@@ -189,7 +194,7 @@ int stcp_close(stcp_send_ctrl_blk *cb) {
     struct tcpheader *finAck = malloc(sizeof(packet));
 
 
-    send_and_wait(fd, dataPacket, finAck);
+    send_and_wait(fd, synPacket, finAck);
 
     seq = synPacket->hdr->ackNo;
     ack = synPacket->hdr->seqNo;
