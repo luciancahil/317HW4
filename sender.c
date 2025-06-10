@@ -41,10 +41,13 @@ typedef struct {
 } stcp_send_ctrl_blk;
 /* ADD ANY EXTRA FUNCTIONS HERE */
 
-int send_and_wait(int fd, packet *dataPacket, tcpheader *responsePacket) {
+int send_and_wait(int fd, packet *dataPacket, tcpheader *responsePacket, char expectedFlags) {
     int response = 0;
     
-    int expectedAck = ntohl(dataPacket->hdr->seqNo) + dataPacket->len - 20;
+    unsigned int expectedAck = ntohl(dataPacket->hdr->seqNo) + dataPacket->len - 20;
+    if((expectedFlags & 3) != 0) {
+        expectedAck += 1;
+    }
 
 
 
@@ -52,13 +55,12 @@ int send_and_wait(int fd, packet *dataPacket, tcpheader *responsePacket) {
         send(fd, dataPacket->data, dataPacket->len, 0);
         response = readWithTimeout(fd, responsePacket, 100);
 
-        if((responsePacket->flags & 3) != 0) {
-            expectedAck += 1;
-        }
 
 
         if(expectedAck != ntohl(responsePacket->ackNo)) {
-            printf("bad ack");
+            printf("bad ack\n");
+            printf("Expected: %d\n", expectedAck);
+            printf("Actual: %d\n", ntohl(responsePacket->ackNo));
             response = 0;
         }
     }
@@ -111,7 +113,7 @@ int stcp_send(stcp_send_ctrl_blk *stcp_CB, unsigned char* data, int length) {
     dataPacket->hdr->checksum = ipchecksum(dataPacket, dataPacket->len);
     struct tcpheader *ackPacket = malloc(sizeof(tcpheader));
 
-    send_and_wait(fd, dataPacket, ackPacket);
+    send_and_wait(fd, dataPacket, ackPacket, 16);
 
     stcp_CB->nextAck = ackPacket->seqNo;
     stcp_CB->nextSeq = ackPacket->ackNo;
@@ -158,7 +160,7 @@ stcp_send_ctrl_blk * stcp_open(char *destination, int sendersPort,
     synPacket->hdr->checksum = ipchecksum(synPacket, synPacket->len);
     struct tcpheader *synAckPacket = malloc(sizeof(tcpheader));
 
-    send_and_wait(fd, synPacket, synAckPacket);
+    send_and_wait(fd, synPacket, synAckPacket, 18);
     
 
 
@@ -205,7 +207,7 @@ int stcp_close(stcp_send_ctrl_blk *cb) {
     struct tcpheader *finAck = malloc(sizeof(packet));
 
 
-    send_and_wait(fd, synPacket, finAck);
+    send_and_wait(fd, synPacket, finAck, 17);
 
     seq = synPacket->hdr->ackNo;
     ack = synPacket->hdr->seqNo;
