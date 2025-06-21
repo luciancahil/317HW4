@@ -30,3 +30,10 @@ Recieve syn / ack.
 Send data.
 
 Next, read the data into the header, and get ready to send the file.
+
+
+TODO:
+
+I need to create the routing table. Let's sort it by "mask_size".
+
+#2 ^ 1 - 1
