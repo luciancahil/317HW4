@@ -37,8 +37,10 @@ void run() {
         readpkt(fd, pkt, interface);
 
         ipheader *hdr = (ipheader *)&pkt->data;
-        printf("Destination: %x\n", hdr->dstipaddr);
-        sendpkt(fd, 3, pkt);
+
+        hdr->ttl = hdr->ttl - 1;
+        printf("TTL after: %x\n", hdr->ttl);
+        sendpkt(fd, 7, pkt);
     }
     printf("Hello after\n");
 }
