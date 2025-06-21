@@ -38,8 +38,18 @@ void run() {
 
         ipheader *hdr = (ipheader *)&pkt->data;
 
+        ntohHdr(hdr);
         hdr->ttl = hdr->ttl - 1;
-        printf("TTL after: %x\n", hdr->ttl);
+        
+        
+        unsigned short *length = malloc(sizeof(short));
+
+        *length = (hdr->length);	// Length in bytes of the entire datagram
+
+        
+        printf("Len: %d\n", *length);
+
+        htonHdr(hdr);
         sendpkt(fd, 7, pkt);
     }
     printf("Hello after\n");
