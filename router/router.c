@@ -7,6 +7,14 @@
 #include "util.h"
 #include "log.h"
 
+
+
+int interface_size = 0;
+
+int interface_list_max_size = 12;
+
+int *interface_list;
+
 /*
  * Add a forwarding entry to your forwarding table.  The network address is
  * given by the network and netlength arguments.  Datagrams destined for
@@ -14,6 +22,7 @@
  */
 void addForwardEntry(uint32_t network, int netlength, int interface) {
     // TODO: Implement this
+    printf("FE: %d\n", interface);
 }
 
 /*
@@ -21,13 +30,18 @@ void addForwardEntry(uint32_t network, int netlength, int interface) {
  */
 void addInterface(int interface) {
     printf("Interface: %d\n", interface);
+
+    interface_list[interface_size] = interface;
+
+    interface_size += 1;
+    printf("Num interfaces: %d\n", interface_size);
     // TODO: Implement this
 }
 
 void run() {
     int port = getDefaultPort();
     int fd = udp_open(port);
-    struct packet *pkt = malloc(12);
+    struct packet *pkt = malloc(sizeof(packet));
     printf("%d\n", port);
 
     int *interface = malloc(sizeof(int));
@@ -52,17 +66,18 @@ void run() {
 
 
         
-        printf("Cksum: %x\n", checksum);
+        printf("size: %d\n", sizeof(packet));
 
         sendpkt(fd, 7, pkt);
     }
-    printf("Hello after\n");
 }
 
 
 int main(int argc, char **argv) {
     logConfig("router", "packet,error,failure");
     printf("Yo!\n");
+    interface_list = malloc(12 * sizeof(int));
+
     char *configFileName = "router.config";
     if (argc > 1) {
 	configFileName = argv[1];
