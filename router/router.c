@@ -37,19 +37,23 @@ void run() {
         readpkt(fd, pkt, interface);
 
         ipheader *hdr = (ipheader *)&pkt->data;
+        hdr->ttl = hdr->ttl - 1;
+        if(hdr->ttl <= 0) {
+            continue;
+        }
+        hdr->checksum = 0;
+        unsigned short checksum = ipchecksum(hdr, sizeof(ipheader));
+        hdr->checksum = checksum;
 
         ntohHdr(hdr);
-        hdr->ttl = hdr->ttl - 1;
         
-        
-        unsigned short *length = malloc(sizeof(short));
-
-        *length = (hdr->length);	// Length in bytes of the entire datagram
-
-        
-        printf("Len: %d\n", *length);
-
+        int length = hdr->length;
         htonHdr(hdr);
+
+
+        
+        printf("Cksum: %x\n", checksum);
+
         sendpkt(fd, 7, pkt);
     }
     printf("Hello after\n");
