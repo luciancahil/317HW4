@@ -35,6 +35,7 @@ void run() {
 
     while(1){
         readpkt(fd, pkt, interface);
+        sendpkt(fd, 3, pkt);
     }
     printf("Hello after\n");
 }
