@@ -17,7 +17,7 @@ typedef struct forwardingRow {
 
 
 
-unsigned char interfaceActive[8];
+unsigned char interfaceActive[100];
 
 int forwarding_size = 0;
 
@@ -102,8 +102,7 @@ int pickInterface(uint32_t network) {
         }
     }
 
-    // we shouldn't  ever be here, since ther should always be a 0.0.0.0/0 option
-    return 0;
+    return -1;
 }
 
 void run() {
@@ -118,7 +117,9 @@ void run() {
     while(1){
         readpkt(fd, pkt, interface);
         ipheader *hdr = (ipheader *)&pkt->data;
-
+        if(hdr->ttl == 0 || hdr->ttl == 1) {
+            continue;
+        }
 
         // checking checksum
         unsigned short expected = hdr->checksum;
@@ -130,6 +131,7 @@ void run() {
 
         // decrementing ttl
         hdr->ttl = hdr->ttl - 1;
+        printf("TTL: %d\n", hdr->ttl);
         if(hdr->ttl <= 0) {
             continue;
         }
@@ -142,22 +144,13 @@ void run() {
             continue;
         }
 
-        printf("Checksum: %x\n", hdr->checksum);
         hdr->checksum = 0;
         unsigned short checksum = ipchecksum(hdr, sizeof(ipheader));
         hdr->checksum = checksum;
 
         int newInterface = pickInterface(hdr->dstipaddr);
 
-        printf("inteface, active: %d, %d\n", newInterface, interfaceActive[newInterface]);
-
-
-        if(!interfaceActive[newInterface]) {
-            continue;
-        }
-
-
-        if (newInterface == *interface) {
+        if (newInterface == *interface || newInterface == -1) {
             continue;
         }
 
@@ -196,10 +189,5 @@ int main(int argc, char **argv) {
 
 
 /*
-
-        ntohHdr(hdr);
-        
-        int length = hdr->length;
-        htonHdr(hdr);
-
+Hello there.
 */
