@@ -99,6 +99,21 @@ void addInterface(int interface) {
     // TODO: Implement this
 }
 
+
+int pickInterface(uint32_t network) {
+    for (int i = 0; i < forwarding_size; i++) {
+        struct forwardingRow  *row = forwarding_list[i];
+        uint32_t mask = row->mask;
+
+        if((network & mask) == (row->network & mask)) {
+            return row->interface;
+        }
+    }
+
+    // we shouldn't  ever be here, since ther should always be a 0.0.0.0/0 option
+    return 0;
+}
+
 void run() {
     int port = getDefaultPort();
     int fd = udp_open(port);
@@ -121,17 +136,17 @@ void run() {
         unsigned short checksum = ipchecksum(hdr, sizeof(ipheader));
         hdr->checksum = checksum;
 
-        ntohHdr(hdr);
-        
-        int length = hdr->length;
-        htonHdr(hdr);
+        int newInterface = pickInterface(hdr->dstipaddr);
 
-
+        printf("Next interface: %d", newInterface);
+        if (newInterface == *interface) {
+            continue;
+        }
 
         
         printf("size: %d\n", sizeof(packet));
 
-        sendpkt(fd, 7, pkt);
+        sendpkt(fd, newInterface, pkt);
     }
 }
 
@@ -159,3 +174,14 @@ int main(int argc, char **argv) {
     run();
     return 0;
 }
+
+
+
+/*
+
+        ntohHdr(hdr);
+        
+        int length = hdr->length;
+        htonHdr(hdr);
+
+*/

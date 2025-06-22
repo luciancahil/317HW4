@@ -62,3 +62,6 @@ Check checksum
 
 Decrement time to live (TTL)
 
+Next:
+
+Go through each row, to find the right port. Check if the incoming port is the same as the outgoing port. 
