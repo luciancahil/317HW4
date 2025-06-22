@@ -17,12 +17,7 @@ typedef struct forwardingRow {
 
 
 
-int interface_size = 0;
-
-int interface_list_max_size = 100;
-
-int *interface_list;
-
+unsigned char interfaceActive[8];
 
 int forwarding_size = 0;
 
@@ -48,6 +43,10 @@ uint32_t getMask(int mask_size) {
 
  void addForwardEntry(uint32_t network, int netlength, int interface) {
     // TODO: Implement this
+
+    if(!interfaceActive[interface]) {
+        return;
+    }
 
     struct forwardingRow *newRow = (struct forwardingRow *)malloc(sizeof(forwardingRow));
 
@@ -88,10 +87,7 @@ void sortForwardTable() {
  * Add an interface to your router. 
  */
 void addInterface(int interface) {
-
-    interface_list[interface_size] = interface;
-
-    interface_size += 1;
+    interfaceActive[interface] = 1;
     // TODO: Implement this
 }
 
@@ -140,7 +136,7 @@ void run() {
 
 
 
-        printf("Actual vs Expected: (%x, %x)", actual, expected);
+        printf("Actual vs Expected: (%x, %x)\n", actual, expected);
 
         if (actual != expected) {
             continue;
@@ -153,9 +149,19 @@ void run() {
 
         int newInterface = pickInterface(hdr->dstipaddr);
 
+        printf("inteface, active: %d, %d\n", newInterface, interfaceActive[newInterface]);
+
+
+        if(!interfaceActive[newInterface]) {
+            continue;
+        }
+
+
         if (newInterface == *interface) {
             continue;
         }
+
+
 
         
 
@@ -166,12 +172,15 @@ void run() {
 
 int main(int argc, char **argv) {
     logConfig("router", "packet,error,failure");
-    interface_list = malloc(12 * sizeof(int));
     forwarding_list = malloc(12 * sizeof(forwardingRow*));
 
     char *configFileName = "router.config";
     if (argc > 1) {
 	configFileName = argv[1];
+    }
+
+    for (int i = 0; i < 8; i++) {
+        interfaceActive[i] = 0;
     }
     configLoad(configFileName, addForwardEntry, addInterface);
 
