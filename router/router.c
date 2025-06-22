@@ -8,12 +8,26 @@
 #include "log.h"
 
 
+typedef struct forwardingRow {
+    uint32_t network;
+    int netlength;
+    int interface;
+} forwardingRow;
+
+
 
 int interface_size = 0;
 
 int interface_list_max_size = 12;
 
 int *interface_list;
+
+
+int forwarding_size = 0;
+
+int forwarding_list_max_size = 12;
+
+struct forwardingRow *forwarding_list;
 
 /*
  * Add a forwarding entry to your forwarding table.  The network address is
@@ -22,7 +36,22 @@ int *interface_list;
  */
 void addForwardEntry(uint32_t network, int netlength, int interface) {
     // TODO: Implement this
-    printf("FE: %d\n", interface);
+
+    struct forwardingRow *newRow = (struct forwardingRow *)malloc(sizeof(forwardingRow));
+
+    newRow->network = network;
+    newRow->netlength = netlength;
+    newRow->interface = interface;
+
+
+
+    forwarding_list[forwarding_size] = *newRow;
+    forwarding_size++;
+
+    free(newRow);
+
+    printf("FE: %d\n", forwarding_size);
+    printf("last network: %x\\%d\n", forwarding_list[forwarding_size - 1].network, forwarding_list[forwarding_size - 1].netlength);
 }
 
 /*
@@ -77,6 +106,7 @@ int main(int argc, char **argv) {
     logConfig("router", "packet,error,failure");
     printf("Yo!\n");
     interface_list = malloc(12 * sizeof(int));
+    forwarding_list = malloc(12 * sizeof(forwardingRow));
 
     char *configFileName = "router.config";
     if (argc > 1) {
