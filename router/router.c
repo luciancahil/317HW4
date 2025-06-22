@@ -60,8 +60,6 @@ uint32_t getMask(int mask_size) {
     forwarding_list[forwarding_size] = newRow;
     forwarding_size++;
 
-
-    printf("last network mask: %x\n", forwarding_list[forwarding_size - 1]->mask);
 }
 
 void sortForwardTable() {
@@ -90,12 +88,10 @@ void sortForwardTable() {
  * Add an interface to your router. 
  */
 void addInterface(int interface) {
-    printf("Interface: %d\n", interface);
 
     interface_list[interface_size] = interface;
 
     interface_size += 1;
-    printf("Num interfaces: %d\n", interface_size);
     // TODO: Implement this
 }
 
@@ -118,7 +114,6 @@ void run() {
     int port = getDefaultPort();
     int fd = udp_open(port);
     struct packet *pkt = malloc(sizeof(packet));
-    printf("%d\n", port);
 
     int *interface = malloc(sizeof(int));
     // TODO: Implement this
@@ -126,25 +121,43 @@ void run() {
 
     while(1){
         readpkt(fd, pkt, interface);
-
         ipheader *hdr = (ipheader *)&pkt->data;
+
+
+        // checking checksum
+        unsigned short expected = hdr->checksum;
+
+        hdr->checksum = 0;
+
+        unsigned short actual = ipchecksum(hdr, sizeof(ipheader));
+
+
+        // decrementing ttl
         hdr->ttl = hdr->ttl - 1;
         if(hdr->ttl <= 0) {
             continue;
         }
+
+
+
+        printf("Actual vs Expected: (%x, %x)", actual, expected);
+
+        if (actual != expected) {
+            continue;
+        }
+
+        printf("Checksum: %x\n", hdr->checksum);
         hdr->checksum = 0;
         unsigned short checksum = ipchecksum(hdr, sizeof(ipheader));
         hdr->checksum = checksum;
 
         int newInterface = pickInterface(hdr->dstipaddr);
 
-        printf("Next interface: %d", newInterface);
         if (newInterface == *interface) {
             continue;
         }
 
         
-        printf("size: %d\n", sizeof(packet));
 
         sendpkt(fd, newInterface, pkt);
     }
@@ -153,7 +166,6 @@ void run() {
 
 int main(int argc, char **argv) {
     logConfig("router", "packet,error,failure");
-    printf("Yo!\n");
     interface_list = malloc(12 * sizeof(int));
     forwarding_list = malloc(12 * sizeof(forwardingRow*));
 
@@ -165,10 +177,7 @@ int main(int argc, char **argv) {
 
     sortForwardTable();
 
-    printf("Size: %d\n", forwarding_size);
-    for (int i = 0; i < forwarding_size; i++) {
-        printf("Network + Mask: %x, %d\n", forwarding_list[i]->network, forwarding_list[i]->netlength);
-    }
+
     
     
     run();
