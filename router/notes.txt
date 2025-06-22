@@ -1,0 +1,64 @@
+Is the main command that gets run.
+
+Maybe run router to start waiting for messages?
+
+./tester tosend.script
+
+Either that, or look through tutorials.
+
+Well, the tutorials was useless.
+
+Okay. I got it now. This is fine. 
+
+Basically,
+
+I'm gonna take a break.
+
+come back to this later.
+
+
+
+To Run:
+Type "make"
+type "./router
+On another terminal, type "./tester tosend.script" (any other script is fine. Needs to be in this project).
+When this is done, readpkt(fd, pkt, interface); in router.run will unfreeze.
+The endless loop is fine.
+
+int sendpkt(int fd, int interface, packet *pkt);
+
+
+TODO:
+Dummy send using interface 7.
+Send after proper forwarding.
+    Make a global variable. Figure out what. Something with pointers being dynamic arrays?
+Send after verifying checksum.
+
+
+Need to make a table_row structure.
+
+What should the table row have?
+
+It needs the address, the mask, and the port.
+
+Should I have the masked address? Nah.
+
+Anyways, make the struct.
+
+Configure the table.
+
+Check the incoming packets for dest.
+
+(Later: Check the checksum).
+
+Pass the packet to a function that returns the port.
+
+Actually, I should probably read the packet first.
+
+
+TODO Laters:
+
+Check checksum
+
+Decrement time to live (TTL)
+

@@ -10,7 +10,7 @@
 
 typedef struct forwardingRow {
     uint32_t network;
-    int netlength;
+    uint32_t mask;
     int interface;
 } forwardingRow;
 
@@ -34,13 +34,24 @@ struct forwardingRow *forwarding_list;
  * given by the network and netlength arguments.  Datagrams destined for
  * this network are to be sent out on the indicated interface.
  */
-void addForwardEntry(uint32_t network, int netlength, int interface) {
+
+
+
+uint32_t getMask(int mask_size) {
+    if(mask_size == 0){
+        return 0;
+    }
+
+    return 0xFFFFFFFF << (32 - mask_size);
+}
+
+ void addForwardEntry(uint32_t network, int netlength, int interface) {
     // TODO: Implement this
 
     struct forwardingRow *newRow = (struct forwardingRow *)malloc(sizeof(forwardingRow));
 
     newRow->network = network;
-    newRow->netlength = netlength;
+    newRow->mask = getMask(netlength);
     newRow->interface = interface;
 
 
@@ -50,8 +61,7 @@ void addForwardEntry(uint32_t network, int netlength, int interface) {
 
     free(newRow);
 
-    printf("FE: %d\n", forwarding_size);
-    printf("last network: %x\\%d\n", forwarding_list[forwarding_size - 1].network, forwarding_list[forwarding_size - 1].netlength);
+    printf("last network mask: %x\n", forwarding_list[forwarding_size - 1].mask);
 }
 
 /*
