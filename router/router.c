@@ -27,7 +27,7 @@ int forwarding_size = 0;
 
 int forwarding_list_max_size = 12;
 
-struct forwardingRow *forwarding_list;
+struct forwardingRow **forwarding_list;
 
 /*
  * Add a forwarding entry to your forwarding table.  The network address is
@@ -56,12 +56,11 @@ uint32_t getMask(int mask_size) {
 
 
 
-    forwarding_list[forwarding_size] = *newRow;
+    forwarding_list[forwarding_size] = newRow;
     forwarding_size++;
 
-    free(newRow);
 
-    printf("last network mask: %x\n", forwarding_list[forwarding_size - 1].mask);
+    printf("last network mask: %x\n", forwarding_list[forwarding_size - 1]->mask);
 }
 
 /*
@@ -116,7 +115,7 @@ int main(int argc, char **argv) {
     logConfig("router", "packet,error,failure");
     printf("Yo!\n");
     interface_list = malloc(12 * sizeof(int));
-    forwarding_list = malloc(12 * sizeof(forwardingRow));
+    forwarding_list = malloc(12 * sizeof(forwardingRow*));
 
     char *configFileName = "router.config";
     if (argc > 1) {
