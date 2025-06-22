@@ -12,20 +12,21 @@ typedef struct forwardingRow {
     uint32_t network;
     uint32_t mask;
     int interface;
+    int netlength;
 } forwardingRow;
 
 
 
 int interface_size = 0;
 
-int interface_list_max_size = 12;
+int interface_list_max_size = 100;
 
 int *interface_list;
 
 
 int forwarding_size = 0;
 
-int forwarding_list_max_size = 12;
+int forwarding_list_max_size = 100;
 
 struct forwardingRow **forwarding_list;
 
@@ -53,7 +54,7 @@ uint32_t getMask(int mask_size) {
     newRow->network = network;
     newRow->mask = getMask(netlength);
     newRow->interface = interface;
-
+    newRow->netlength = netlength;
 
 
     forwarding_list[forwarding_size] = newRow;
@@ -61,6 +62,28 @@ uint32_t getMask(int mask_size) {
 
 
     printf("last network mask: %x\n", forwarding_list[forwarding_size - 1]->mask);
+}
+
+void sortForwardTable() {
+    struct forwardingRow *temp;
+
+    for (int i = 0; i < forwarding_size - 1; i++) {
+        int largest_index = i;
+        int largest_mask = forwarding_list[i]->mask;
+
+        for (int j = i + 1; j < forwarding_size; j++) {
+            if (forwarding_list[j]->mask > largest_mask) {
+                largest_mask = forwarding_list[j]->mask;
+                largest_index = j;
+            }
+        }
+
+        if (largest_index != i) {
+            temp = forwarding_list[i];
+            forwarding_list[i] = forwarding_list[largest_index];
+            forwarding_list[largest_index] = temp;
+        }
+    }
 }
 
 /*
@@ -85,6 +108,7 @@ void run() {
     int *interface = malloc(sizeof(int));
     // TODO: Implement this
 
+
     while(1){
         readpkt(fd, pkt, interface);
 
@@ -101,6 +125,7 @@ void run() {
         
         int length = hdr->length;
         htonHdr(hdr);
+
 
 
         
@@ -122,6 +147,15 @@ int main(int argc, char **argv) {
 	configFileName = argv[1];
     }
     configLoad(configFileName, addForwardEntry, addInterface);
+
+    sortForwardTable();
+
+    printf("Size: %d\n", forwarding_size);
+    for (int i = 0; i < forwarding_size; i++) {
+        printf("Network + Mask: %x, %d\n", forwarding_list[i]->network, forwarding_list[i]->netlength);
+    }
+    
+    
     run();
     return 0;
 }
